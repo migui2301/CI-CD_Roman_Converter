@@ -1,0 +1,23 @@
+{
+  "name": "roman-numeral-converter",
+  "version": "1.0.0",
+  "description": "A converter between Roman numerals and integers",
+  "main": "script.js",
+  "scripts": {
+    "test": "mocha",
+    "start": "serve ."
+  },
+  "keywords": [
+    "roman",
+    "numerals",
+    "converter",
+    "javascript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "serve": "^14.2.0"
+  }
+}
