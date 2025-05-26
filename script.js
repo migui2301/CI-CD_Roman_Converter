@@ -114,6 +114,82 @@ function romanToInteger(roman) {
   return total;
 }
 
+// Google Analytics tracking functions
+/**
+ * Tracks successful integer to Roman conversion
+ * @param {number} input - The integer input
+ * @param {string} result - The Roman numeral result
+ */
+function trackIntegerToRomanConversion(input, result) {
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'integer_to_roman_conversion', {
+      event_category: 'conversion',
+      event_label: 'success',
+      value: input,
+      custom_parameter_roman_result: result
+    });
+  }
+}
+
+/**
+ * Tracks successful Roman to integer conversion
+ * @param {string} input - The Roman numeral input
+ * @param {number} result - The integer result
+ */
+function trackRomanToIntegerConversion(input, result) {
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'roman_to_integer_conversion', {
+      event_category: 'conversion',
+      event_label: 'success',
+      custom_parameter_roman_input: input,
+      value: result
+    });
+  }
+}
+
+/**
+ * Tracks conversion errors
+ * @param {string} errorType - Type of error that occurred
+ * @param {string} input - The input that caused the error
+ * @param {string} conversionMode - The conversion mode being used
+ */
+function trackConversionError(errorType, input, conversionMode) {
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'conversion_error', {
+      event_category: 'error',
+      event_label: errorType,
+      custom_parameter_input: input,
+      custom_parameter_mode: conversionMode
+    });
+  }
+}
+
+/**
+ * Tracks when user clicks the convert button
+ * @param {string} conversionMode - The selected conversion mode
+ */
+function trackConvertButtonClick(conversionMode) {
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'convert_button_click', {
+      event_category: 'engagement',
+      event_label: conversionMode
+    });
+  }
+}
+
+/**
+ * Tracks when user changes conversion mode
+ * @param {string} newMode - The newly selected conversion mode
+ */
+function trackModeChange(newMode) {
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'conversion_mode_change', {
+      event_category: 'engagement',
+      event_label: newMode
+    });
+  }
+}
+
 /**
  * Handles the conversion process when the user clicks the convert button.
  * It reads the user input, determines which conversion to perform,
@@ -128,6 +204,9 @@ function handleConversion() {
   const resultDiv = document.getElementById('result');
   const errorDiv = document.getElementById('error');
 
+  // Track button click
+  trackConvertButtonClick(mode);
+
   // Clear any previous result or error messages.
   resultDiv.textContent = '';
   errorDiv.textContent = '';
@@ -137,22 +216,60 @@ function handleConversion() {
       // Attempt to parse the input as an integer.
       const num = parseInt(input, 10);
       if (isNaN(num)) {
+        trackConversionError('invalid_integer_input', input, mode);
         throw new Error('Please enter a valid integer number.');
       }
       // Convert the integer to a Roman numeral.
       const roman = integerToRoman(num);
       resultDiv.textContent = `Roman Numeral: ${roman}`;
+      
+      // Track successful conversion
+      trackIntegerToRomanConversion(num, roman);
+      
     } else if (mode === 'romanToInt') {
       // Convert the Roman numeral to an integer.
       const num = romanToInteger(input);
       resultDiv.textContent = `Integer: ${num}`;
+      
+      // Track successful conversion
+      trackRomanToIntegerConversion(input, num);
     }
   } catch (error) {
     // Display any error messages encountered during conversion.
     errorDiv.textContent = error.message;
+    
+    // Track the specific error type
+    let errorType = 'unknown_error';
+    if (error.message.includes('valid integer')) {
+      errorType = 'invalid_integer_input';
+    } else if (error.message.includes('between 1 and 3999')) {
+      errorType = 'number_out_of_range';
+    } else if (error.message.includes('valid Roman numeral') || error.message.includes('invalid characters')) {
+      errorType = 'invalid_roman_input';
+    } else if (error.message.includes('canonical form')) {
+      errorType = 'non_canonical_roman';
+    } else if (error.message.includes('integer')) {
+      errorType = 'non_integer_input';
+    }
+    
+    trackConversionError(errorType, input, mode);
   }
 }
 
 // Attach an event listener to the convert button to trigger the conversion when clicked.
 document.getElementById('convertButton').addEventListener('click', handleConversion);
 
+// Track mode changes
+document.getElementById('conversionMode').addEventListener('change', function(event) {
+  trackModeChange(event.target.value);
+});
+
+// Track page load
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'page_ready', {
+      event_category: 'engagement',
+      event_label: 'converter_loaded'
+    });
+  }
+});
